@@ -3,129 +3,104 @@
 /*                                                        :::      ::::::::   */
 /*   execution.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hakader <hakader@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/05 09:49:04 by hakader           #+#    #+#             */
-/*   Updated: 2025/04/29 13:17:41 by hakader          ###   ########.fr       */
+/*   Updated: 2025/05/03 17:45:51 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "execution.h"
 
-void expand_args_in_cmd(t_cmd *cmd, t_env *env, int last_exit)
+int path_cmd(t_cmd *f_cmd, char **envp)
 {
-    int i = 0;
-    while (cmd->args && cmd->args[i])
-    {
-        if (ft_strchr(cmd->args[i], '$'))
-        {
-            char *expanded = expand_token_value(cmd->args[i], env, last_exit);
-            free(cmd->args[i]);
-            cmd->args[i] = expanded;
-        }
-        i++;
-    }
-}
+	pid_t pid;
 
-int get_last_exit_status(int status)
-{
-    if (WIFEXITED(status))
-        return WEXITSTATUS(status);
-    else if (WIFSIGNALED(status))
-        return 128 + WTERMSIG(status);
-    else
-        return 1;
-}
-
-
-#include "execution.h"
-
-int path_cmd(t_cmd *f_cmd, char **envp, t_shell *shell)
-{
-    pid_t pid;
-    int status;
-
-    if (f_cmd->args[0][0] == '/')
-    {
-        if (access(f_cmd->args[0], X_OK) == 0)
-        {
-            pid = fork();
-            if (pid == 0)
-            {
-                execve(f_cmd->args[0], &f_cmd->args[0], envp);
-                exit(127);
-            }
-            else
-            {
-                waitpid(pid, &status, 0);
-                shell->last_exit_status = get_last_exit_status(status);
-            }
-        }
-        return (1);
-    }
-    return (0);
+	if (f_cmd->args && f_cmd->args[0] && f_cmd->args[0][0] == '/')
+	{
+		if (access(f_cmd->args[0], X_OK) == 0)
+		{
+			pid = fork();
+			if (pid == 0)
+				execve(f_cmd->args[0], &f_cmd->args[0], envp);
+			else
+				waitpid(pid, NULL, 0);
+		}
+		return (1);
+	}
+	return (0);
 }
 
 static void exec_child(t_cmd *f_cmd, char *cmd, char **envp)
 {
-    if (f_cmd->infile != NULL)
-        infile(f_cmd->infile);
-    if (f_cmd->outfile != NULL)
-        outfile(f_cmd->outfile);
-    execve(cmd, &f_cmd->args[0], envp);
-    exit(127);
+	if (f_cmd->infile != NULL)
+		infile(f_cmd->infile);
+	if (f_cmd->outfile != NULL)
+		outfile(f_cmd->outfile);
+	execve(cmd, &f_cmd->args[0], envp);
 }
 
-static void exec_command(t_cmd *f_cmd, char **paths, char **envp, t_shell *shell)
+static void exec_command(t_cmd *f_cmd, char **paths, char **envp)
 {
-    pid_t pid;
-    int status;
-    char *cmd;
+	pid_t pid;
+	char *cmd;
 
-    cmd = check_cmd(paths, f_cmd->args[0]);
-    if (cmd)
-    {
-        pid = fork();
-        if (pid == 0)
-            exec_child(f_cmd, cmd, envp);
-        else
-        {
-            waitpid(pid, &status, 0);
-            shell->last_exit_status = get_last_exit_status(status);
-        }
-        free(cmd);
-    }
-    else
-    {
-        printf("%s: command not found\n", f_cmd->args[0]);
-        shell->last_exit_status = 127;
-    }
+	cmd = check_cmd(paths, f_cmd->args[0]);
+	if (cmd)
+	{
+		pid = fork();
+		if (pid == 0)
+			exec_child(f_cmd, cmd, envp);
+		else
+			waitpid(pid, NULL, 0);
+		free(cmd);
+	}
+	else
+		printf("%s: command not found\n", f_cmd->args[0]);
 }
 
-void execution_part(t_cmd *f_cmd, t_env *env_list, char **envp, t_shell *shell)
+
+
+void execution_part(t_cmd *f_cmd, t_env *env_list, char **envp)
 {
-    char **paths;
-    t_cmd *head = f_cmd;
+	char **paths;
+	t_cmd *tmp;
 
-    if (path_cmd(f_cmd, envp, shell))
-    {
-        free_cmd_list(head);
-        return;
-    }
+	if (!f_cmd)
+		return;
 
-    paths = get_paths(env_list);
-    while (f_cmd)
-    {
-        expand_args_in_cmd(f_cmd, shell->env, shell->last_exit_status);
+	paths = get_paths(env_list);
+	while (f_cmd)
+	{
+		tmp = f_cmd;
 
-        if (is_builtin(f_cmd, env_list))
-        {
-            shell->last_exit_status = 0;
-            break;
-        }
+		if (f_cmd->has_pipe)
+		{
+			pipex(f_cmd, env_list, envp);
+			while (f_cmd && f_cmd->has_pipe)
+			{
+				tmp = f_cmd;
+				f_cmd = f_cmd->next;
+				free(tmp);
+			}
+			if (f_cmd)
+			{
+				tmp = f_cmd;
+				f_cmd = f_cmd->next;
+				free(tmp);
+			}
+			continue;
+		}
 
-        exec_command(f_cmd, paths, envp, shell);
-        f_cmd = f_cmd->next;
-    }
-    free_cmd_list(head);
+		if (f_cmd->args && f_cmd->args[0] && is_builtin_name(f_cmd->args[0]))
+			exec_builtin(f_cmd, &env_list);
+		else
+			exec_command(f_cmd, paths, envp);
+
+		f_cmd = f_cmd->next;
+		free(tmp);
+	}
 }
+
+
+

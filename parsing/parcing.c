@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parcing.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hakader <hakader@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/09 13:36:31 by sjoukni           #+#    #+#             */
-/*   Updated: 2025/04/29 11:02:13 by hakader          ###   ########.fr       */
+/*   Updated: 2025/05/03 16:19:10 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,7 +98,7 @@ t_token_type get_token_type(char *str)
     return WORD;
 }
 
-t_token *tokenize_line(char *line)
+t_token *tokenize_line(char *line, t_env *env, int last_exit_status)
 {
     int i = 0, len;
     t_token *head = NULL;
@@ -129,8 +129,18 @@ t_token *tokenize_line(char *line)
 
         token_str = strndup(line + i, len);
         type = get_token_type(token_str);
-
-        append_token(&head, create_token(token_str, type));
+        
+        if (type == WORD && ft_strchr(token_str, '$'))
+        {
+            char *expanded = expand_token_value(token_str, env, last_exit_status);
+            append_token(&head, create_token(expanded, type));
+            free(expanded);
+        }
+        else
+        {
+            append_token(&head, create_token(token_str, type));
+        }
+        
 
         free(token_str);
         i += len;

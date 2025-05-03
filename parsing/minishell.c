@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hakader <hakader@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/08 14:23:38 by sjoukni           #+#    #+#             */
-/*   Updated: 2025/04/29 13:18:09 by hakader          ###   ########.fr       */
+/*   Updated: 2025/05/03 16:46:27 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ int	main(int ac, char **av, char **envp)
 		if (!line)
 		{
 			free(line);
-			free_shell(shell);
+			// free_shell(shell);
 			exit(0);
 		}
 
@@ -61,24 +61,24 @@ int	main(int ac, char **av, char **envp)
 
 		add_history(line);
 
-		shell->tokens = tokenize_line(line);
+		shell->tokens = tokenize_line(line, shell->env, shell->last_exit_status);
 		if (shell->tokens && check_syntax(shell->tokens))
 		{
 			shell->cmds = build_cmd_list(shell->tokens);
 			if (shell->cmds)
 			{
 				// print_cmd_list(shell->cmds);
-				execution_part(shell->cmds, shell->env, envp, shell);
+				execution_part(shell->cmds, shell->env, envp);
 			}
 		}
 
-		free_token_list(shell->tokens);
-		shell->tokens = NULL;
+		// free_token_list(shell->tokens);
+		// shell->tokens = NULL;
 		// free_cmd_list(shell->cmds);
 		// shell->cmds = NULL;
 		free(line);
 	}
 
-	free_shell(shell);
+	// free_shell(shell);
 	return (0);
 }
