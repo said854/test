@@ -6,7 +6,7 @@
 /*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/05 09:49:04 by hakader           #+#    #+#             */
-/*   Updated: 2025/05/03 17:45:51 by sjoukni          ###   ########.fr       */
+/*   Updated: 2025/05/05 15:52:53 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,12 +38,37 @@ static void exec_child(t_cmd *f_cmd, char *cmd, char **envp)
 	if (f_cmd->outfile != NULL)
 		outfile(f_cmd->outfile);
 	execve(cmd, &f_cmd->args[0], envp);
+	perror("execve failed");
+	exit(1);
 }
 
-static void exec_command(t_cmd *f_cmd, char **paths, char **envp)
+static void exec_command(t_cmd *f_cmd, char **paths, char **envp, t_env **env_list)
 {
-	pid_t pid;
-	char *cmd;
+	pid_t	pid;
+	char	*cmd;
+
+	if (is_builtin_name(f_cmd->args[0]))
+	{
+		if (f_cmd->has_pipe)
+		{
+			pid = fork();
+			if (pid == 0)
+			{
+				if (f_cmd->infile)
+					infile(f_cmd->infile);
+				if (f_cmd->outfile)
+					outfile(f_cmd->outfile);
+				exit(exec_builtin(f_cmd, env_list));
+			}
+			else
+				waitpid(pid, NULL, 0);
+		}
+		else
+		{
+			exec_builtin(f_cmd, env_list);
+		}
+		return;
+	}
 
 	cmd = check_cmd(paths, f_cmd->args[0]);
 	if (cmd)
@@ -58,8 +83,6 @@ static void exec_command(t_cmd *f_cmd, char **paths, char **envp)
 	else
 		printf("%s: command not found\n", f_cmd->args[0]);
 }
-
-
 
 void execution_part(t_cmd *f_cmd, t_env *env_list, char **envp)
 {
@@ -92,15 +115,14 @@ void execution_part(t_cmd *f_cmd, t_env *env_list, char **envp)
 			continue;
 		}
 
-		if (f_cmd->args && f_cmd->args[0] && is_builtin_name(f_cmd->args[0]))
-			exec_builtin(f_cmd, &env_list);
-		else
-			exec_command(f_cmd, paths, envp);
+		exec_command(f_cmd, paths, envp, &env_list);
 
 		f_cmd = f_cmd->next;
 		free(tmp);
 	}
 }
+
+
 
 
 

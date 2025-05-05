@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   env_copy.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hakader <hakader@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/01 18:08:35 by sjoukni           #+#    #+#             */
-/*   Updated: 2025/04/29 11:02:03 by hakader          ###   ########.fr       */
+/*   Updated: 2025/05/04 16:19:42 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,9 @@ char *value(char *str)
 
 t_env *env_copy(char *content)
 {
+    if (!content || !ft_strchr(content, '='))
+        return NULL;
+
     t_env *new_node = malloc(sizeof(t_env));
     if (!new_node)
         return NULL;
@@ -74,6 +77,7 @@ t_env *env_copy(char *content)
 
     return new_node;
 }
+
 void append_env(t_env **head, t_env *new_node)
 {
 	if (!*head)

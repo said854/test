@@ -6,7 +6,7 @@
 /*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/08 14:23:38 by sjoukni           #+#    #+#             */
-/*   Updated: 2025/05/03 16:46:27 by sjoukni          ###   ########.fr       */
+/*   Updated: 2025/05/05 17:48:15 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,8 +67,8 @@ int	main(int ac, char **av, char **envp)
 			shell->cmds = build_cmd_list(shell->tokens);
 			if (shell->cmds)
 			{
-				// print_cmd_list(shell->cmds);
-				execution_part(shell->cmds, shell->env, envp);
+				print_cmd_list(shell->cmds);
+				// execution_part(shell->cmds, shell->env, envp);
 			}
 		}
 

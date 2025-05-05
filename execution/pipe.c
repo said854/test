@@ -6,13 +6,14 @@
 /*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/14 16:00:37 by sjoukni           #+#    #+#             */
-/*   Updated: 2025/05/03 17:45:07 by sjoukni          ###   ########.fr       */
+/*   Updated: 2025/05/05 16:56:32 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "execution.h"
+#include <sys/wait.h>
 
-void	handle_redirections(t_cmd *cmd)
+void handle_redirections(t_cmd *cmd)
 {
 	int	fd;
 	int	flags;
@@ -22,8 +23,8 @@ void	handle_redirections(t_cmd *cmd)
 		fd = open(cmd->infile, O_RDONLY);
 		if (fd < 0)
 		{
-			perror("open infile");
-			exit(1);
+			perror(cmd->infile);
+			exit(EXIT_FAILURE);
 		}
 		dup2(fd, STDIN_FILENO);
 		close(fd);
@@ -32,21 +33,23 @@ void	handle_redirections(t_cmd *cmd)
 	{
 		flags = O_WRONLY | O_CREAT;
 		flags |= cmd->append ? O_APPEND : O_TRUNC;
-
 		fd = open(cmd->outfile, flags, 0644);
 		if (fd < 0)
 		{
-			perror("open outfile");
-			exit(1);
+			perror(cmd->outfile);
+			exit(EXIT_FAILURE);
 		}
 		dup2(fd, STDOUT_FILENO);
 		close(fd);
-	}
+	}	// int status, exit_code;
+	// waitpid(pid, &status, 0);
+	// if (WIFEXITED)
+	// 	exit_code = WEXITSTATUS(status);
 }
 
-void	exec_pipeline_cmd(t_cmd *cmd, char **envp, char **paths, int in_fd, int out_fd)
+void exec_pipeline_cmd(t_cmd *cmd, t_env **env_list, char **envp, char **paths, int in_fd, int out_fd)
 {
-	char	*cmd_path;
+	char *cmd_path;
 
 	set_child_signals();
 	dup2(in_fd, STDIN_FILENO);
@@ -54,13 +57,10 @@ void	exec_pipeline_cmd(t_cmd *cmd, char **envp, char **paths, int in_fd, int out
 	handle_redirections(cmd);
 
 	if (!cmd->args || !cmd->args[0])
-		exit(0);
+		exit(EXIT_SUCCESS);
 
 	if (is_builtin_name(cmd->args[0]))
-	{
-		exec_builtin(cmd, NULL); 
-		exit(0);
-	}
+		exit(exec_builtin(cmd, env_list));
 
 	cmd_path = check_cmd(paths, cmd->args[0]);
 	if (!cmd_path)
@@ -70,48 +70,52 @@ void	exec_pipeline_cmd(t_cmd *cmd, char **envp, char **paths, int in_fd, int out
 	}
 	execve(cmd_path, cmd->args, envp);
 	perror("execve");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
-void	pipex(t_cmd *cmd, t_env *env_list, char **envp)
+void pipex(t_cmd *cmd, t_env *env_list, char **envp)
 {
 	int		pipe_fd[2];
-	int		in_fd = STDIN_FILENO;
+	int		in_fd = dup(STDIN_FILENO);
+	int		prev_fd = in_fd;
 	pid_t	pid;
 	char	**paths = get_paths(env_list);
+	t_cmd	*current = cmd;
 
-	while (cmd && cmd->has_pipe)
+	while (current && current->has_pipe)
 	{
 		if (pipe(pipe_fd) == -1)
 		{
 			perror("pipe");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		pid = fork();
 		if (pid == 0)
 		{
 			close(pipe_fd[0]);
-			exec_pipeline_cmd(cmd, envp, paths, in_fd, pipe_fd[1]);
+			exec_pipeline_cmd(current, &env_list, envp, paths, prev_fd, pipe_fd[1]);
 		}
 		close(pipe_fd[1]);
-		if (in_fd != STDIN_FILENO)
-			close(in_fd);
-		in_fd = pipe_fd[0];
-		cmd = cmd->next;
+		if (prev_fd != STDIN_FILENO)
+			close(prev_fd);
+		prev_fd = pipe_fd[0];
+		current = current->next;
 	}
 
-	if (cmd)
+	// Last command in pipeline
+	if (current)
 	{
 		pid = fork();
 		if (pid == 0)
-			exec_pipeline_cmd(cmd, envp, paths, in_fd, STDOUT_FILENO);
-		if (in_fd != STDIN_FILENO)
-			close(in_fd);
+			 exec_pipeline_cmd(current, &env_list, envp, paths, prev_fd, STDOUT_FILENO);
+		if (prev_fd != STDIN_FILENO)
+			close(prev_fd);
 	}
-
-	while (wait(NULL) > 0) ;
-	// free_array(paths);
+	// int status, exit_code;
+	// waitpid(pid, &status, 0);
+	// if (WIFEXITED)
+	// 	exit_code = WEXITSTATUS(status);
+	while (wait(NULL) > 0)
+		;
+	free_array(paths);
 }
-
-
-

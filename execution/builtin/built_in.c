@@ -6,7 +6,7 @@
 /*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/12 18:16:08 by hakader           #+#    #+#             */
-/*   Updated: 2025/05/03 17:39:31 by sjoukni          ###   ########.fr       */
+/*   Updated: 2025/05/05 16:21:21 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ int	exec_builtin(t_cmd *cmd, t_env **envp)
 		return (execute_env(cmd, *envp));
 	else if (!ft_strcmp(cmd->args[0], "exit"))
 		return (execute_exit(cmd));
-	return (0);
+	return (1);
 }
 
 
@@ -70,12 +70,15 @@ int	execute_env(t_cmd *cmd, t_env *envp)
 		put_error("env: too many arguments");
 		return (1);
 	}
-	while (tmp)
-	{
-		printf("%s=%s\n", tmp->key, tmp->value);
-		tmp = tmp->next;
-	}
-	return (1);
+    while (tmp)
+    {
+        if (tmp->value)
+            printf("%s=%s\n", tmp->key, tmp->value);
+        else
+            printf("%s=\n", tmp->key);
+        tmp = tmp->next;
+    }
+    return 1;
 }
 
 int	execute_cd(t_cmd *cmd, t_env **env)

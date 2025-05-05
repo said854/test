@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hakader <hakader@student.42.fr>            +#+  +:+       +#+        */
+/*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 12:56:19 by hakader           #+#    #+#             */
-/*   Updated: 2025/05/02 17:09:48 by hakader          ###   ########.fr       */
+/*   Updated: 2025/05/05 17:53:01 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,15 @@ typedef enum e_token_type
 	HEREDOC,
 	SEMICOLON
 } t_token_type;
+
+typedef struct s_redir
+{
+	char *file;
+	int file_type;
+	int open_mode;
+	struct s_redir *next;
+	
+} t_redir ;
 
 
 typedef struct s_cmd
