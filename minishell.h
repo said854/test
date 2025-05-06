@@ -6,7 +6,7 @@
 /*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 12:56:19 by hakader           #+#    #+#             */
-/*   Updated: 2025/05/05 17:53:01 by sjoukni          ###   ########.fr       */
+/*   Updated: 2025/05/06 11:50:12 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,7 @@ typedef struct s_shell
 	int		last_exit_status;
 }	t_shell;
 
+t_shell *shell_a(void);
 
 # include <sys/types.h>
 # include <sys/wait.h>
