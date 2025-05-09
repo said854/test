@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
+/*   By: hakader <hakader@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 12:56:19 by hakader           #+#    #+#             */
-/*   Updated: 2025/05/06 11:50:12 by sjoukni          ###   ########.fr       */
+/*   Updated: 2025/05/07 01:17:32 by hakader          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,29 +37,20 @@ typedef enum e_token_type
 {
 	WORD,
 	PIPE,
-	REDIR_OUT,
 	REDIR_IN,
 	APPEND,
+	REDIR_OUT,
 	HEREDOC,
 	SEMICOLON
 } t_token_type;
-
-typedef struct s_redir
-{
-	char *file;
-	int file_type;
-	int open_mode;
-	struct s_redir *next;
-	
-} t_redir ;
 
 
 typedef struct s_cmd
 {
 	char				**args;
-	char			*infile;
-	char			*outfile;
-	int				append;
+	char **infiles;
+	char **outfiles;
+	int   *append_flags;
 	int				has_pipe;
 	char			*heredoc_delim;
 	int  			heredoc_expand;
@@ -71,10 +62,9 @@ typedef struct s_shell
 	t_env	*env;
 	t_token	*tokens;
 	t_cmd	*cmds;
-	int		last_exit_status;
+	char	**envp;
+	int		exit_status;
 }	t_shell;
-
-t_shell *shell_a(void);
 
 # include <sys/types.h>
 # include <sys/wait.h>
@@ -101,5 +91,7 @@ t_shell *shell_a(void);
 # define MAGENTA	"\x1b[35m"
 # define CYAN		"\x1b[36m"
 # define WHITE		"\x1b[37m"
+
+
 
 #endif

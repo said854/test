@@ -6,7 +6,7 @@
 /*   By: sjoukni <sjoukni@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/12 14:46:03 by sjoukni           #+#    #+#             */
-/*   Updated: 2025/05/06 11:52:28 by sjoukni          ###   ########.fr       */
+/*   Updated: 2025/04/20 16:30:51 by sjoukni          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ int check_syntax(t_token *token_list)
     }
     if (prev && prev->type == PIPE)
         return print_error("syntax error: unexpected end of input after `|`");
-    
+
     return 1;
 }
 
