@@ -98,13 +98,18 @@ char **append_str_array(char **arr, char *new_str, t_list *alloc_list)
 	new_arr[i + 1] = NULL;
 	return new_arr;
 }
+int get_int_array_length(int *arr)
+{
+	int i = 0;
+	while (arr && (arr[i] == 0 || arr[i] == 1))
+		i++;
+	return i;
+}
+
 
 int *append_int_array(int *arr, int value, t_list *alloc_list)
 {
-	int i = 0;
-	while (arr && arr[i])
-		i++;
-
+	int i = get_int_array_length(arr);
 	int *new_arr = ft_malloc(sizeof(int) * (i + 2), &alloc_list);
 	if (!new_arr)
 		return NULL;
@@ -116,9 +121,11 @@ int *append_int_array(int *arr, int value, t_list *alloc_list)
 		j++;
 	}
 	new_arr[i] = value;
-	new_arr[i + 1] = 0;
+	new_arr[i + 1] = -1;
 	return new_arr;
 }
+
+
 
 void add_cmd_to_list(t_cmd **head, t_cmd *new_cmd)
 {

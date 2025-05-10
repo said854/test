@@ -69,14 +69,12 @@ void print_cmd_list(t_cmd *cmd_list)
         printf("\n");
 
         printf("  append flags = ");
-        if (cmd_list->append_flags)
-        {
-            i = 0;
-            while (cmd_list->append_flags[i] || (cmd_list->outfiles && cmd_list->outfiles[i]))
-                printf("%d ", cmd_list->append_flags[i++]);
-        }
-        else
-            printf("(none)");
+        int *flags = cmd_list->append_flags;
+        for (int i = 0; flags && flags[i] != -1; i++)
+            printf("%d ", flags[i]);
+
+        // else
+        //     printf("(none)");
         printf("\n");
 
         // Other fields
